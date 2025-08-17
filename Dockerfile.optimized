@@ -1,0 +1,94 @@
+# Multi-stage build for optimized production image with better caching
+FROM php:8.3-fpm-alpine AS base
+
+# Install system dependencies (rarely changes - cached)
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    libxpm-dev \
+    freetype-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    nginx \
+    supervisor \
+    nodejs \
+    npm \
+    netcat-openbsd
+
+# Install PHP extensions (rarely changes - cached)
+RUN docker-php-ext-configure gd \
+    --with-jpeg \
+    --with-webp \
+    --with-xpm \
+    --with-freetype && \
+    docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    gd \
+    zip \
+    bcmath \
+    opcache \
+    pcntl
+
+# Install Redis extension (rarely changes - cached)
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
+
+# Install Composer (rarely changes - cached)
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy dependency files first (for better caching)
+COPY directmeds/composer.json directmeds/composer.lock ./
+COPY directmeds/package.json directmeds/package-lock.json ./
+
+# Install PHP dependencies (cached if composer.lock hasn't changed)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist --no-scripts --no-autoloader
+
+# Install Node dependencies (cached if package-lock.json hasn't changed)
+RUN npm ci
+
+# Copy application code (changes frequently)
+COPY directmeds/ .
+
+# Finish composer setup with application files present
+RUN composer dump-autoload --optimize --no-dev
+
+# Build frontend assets
+RUN npm run build && rm -rf node_modules
+
+# Configure PHP
+COPY directmeds/docker/php/php.ini /usr/local/etc/php/conf.d/99-custom.ini
+
+# Copy nginx configuration
+COPY directmeds/docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY directmeds/docker/nginx/default.conf /etc/nginx/http.d/default.conf
+
+# Copy supervisor configuration
+COPY directmeds/docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy startup scripts
+COPY directmeds/docker/scripts/startup.sh /usr/local/bin/startup.sh
+COPY directmeds/docker/scripts/startup-remote.sh /usr/local/bin/startup-remote.sh
+RUN chmod +x /usr/local/bin/startup.sh /usr/local/bin/startup-remote.sh
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose port (Traefik will proxy to this)
+EXPOSE 80
+
+# Health check for container orchestration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
+
+# Start services (use startup-remote.sh for remote database)
+CMD ["/usr/local/bin/startup-remote.sh"]
