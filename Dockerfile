@@ -69,9 +69,10 @@ COPY directmeds/docker/nginx/default.conf /etc/nginx/http.d/default.conf
 # Copy supervisor configuration
 COPY directmeds/docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy startup script
+# Copy startup scripts
 COPY directmeds/docker/scripts/startup.sh /usr/local/bin/startup.sh
-RUN chmod +x /usr/local/bin/startup.sh
+COPY directmeds/docker/scripts/startup-remote.sh /usr/local/bin/startup-remote.sh
+RUN chmod +x /usr/local/bin/startup.sh /usr/local/bin/startup-remote.sh
 
 # Expose port (Traefik will proxy to this)
 EXPOSE 80
@@ -80,5 +81,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost/health || exit 1
 
-# Start services
-CMD ["/usr/local/bin/startup.sh"]
+# Start services (use startup-remote.sh for remote database)
+CMD ["/usr/local/bin/startup-remote.sh"]

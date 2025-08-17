@@ -167,7 +167,7 @@ return new class extends Migration
             $table->index(['patient_id', 'verification_status']);
             $table->index(['prescriber_id', 'date_written']);
             $table->index(['verification_status', 'processing_status']);
-            $table->index(['is_controlled_substance', 'controlled_substance_schedule']);
+            $table->index(['is_controlled_substance', 'controlled_substance_schedule'], 'idx_controlled_substance');
             
             // Foreign Key Constraints
             $table->foreign('patient_id')->references('id')->on('users')->cascadeOnDelete();
