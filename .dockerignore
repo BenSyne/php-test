@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# Development
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.editorconfig
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Dependencies (will be installed during build)
+directmeds/vendor
+directmeds/node_modules
+
+# Build artifacts
+directmeds/public/hot
+directmeds/public/storage
+directmeds/storage/*.key
+directmeds/storage/debugbar
+
+# Testing
+directmeds/.phpunit.result.cache
+directmeds/phpunit.xml
+directmeds/.phpunit.cache
+directmeds/coverage
+
+# Docker
+docker-compose.override.yml
+Dockerfile.dev
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+directmeds/storage/logs/*.log
+
+# Cache
+directmeds/bootstrap/cache/*
+!directmeds/bootstrap/cache/.gitignore
+
+# Docs folder (not needed in container)
+docs/

@@ -1,0 +1,42 @@
+# Environment files
+.env
+.env.local
+.env.production
+directmeds/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Laravel specific
+directmeds/vendor/
+directmeds/node_modules/
+directmeds/public/hot
+directmeds/public/storage
+directmeds/storage/*.key
+directmeds/storage/logs/*.log
+directmeds/.phpunit.result.cache
+directmeds/npm-debug.log
+directmeds/yarn-error.log
+
+# Build artifacts
+directmeds/public/build/
+directmeds/public/mix-manifest.json
+
+# Database
+*.sqlite
+*.sqlite-journal
+
+# Temporary files
+*.tmp
+*.bak
+*~
